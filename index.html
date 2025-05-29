@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cypress Automation Testing Demo Site</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Custom styles for better aesthetics and specific interactions */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            color: #334155;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+        .section-title {
+            font-size: 2.25rem; /* text-4xl */
+            font-weight: 700; /* font-bold */
+            color: #1e293b; /* slate-900 */
+            margin-bottom: 1.5rem; /* mb-6 */
+            text-align: center;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            padding: 2rem; /* p-8 */
+            margin-bottom: 2rem; /* mb-8 */
+        }
+        .btn-primary {
+            @apply bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-300 ease-in-out shadow-md;
+        }
+        .btn-secondary {
+            @apply bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition duration-300 ease-in-out shadow-md;
+        }
+        .input-field {
+            @apply w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+        }
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip-text {
+            visibility: hidden;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 10px;
+            position: absolute;
+            z-index: 10;
+            bottom: 125%; /* Position above the element */
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+        }
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            width: 90%;
+            max-width: 500px;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease-in-out;
+        }
+        .modal-overlay.open .modal-content {
+            transform: translateY(0);
+        }
+        /* Tab styles */
+        .tab-button {
+            @apply px-6 py-3 rounded-t-lg text-gray-700 font-semibold border-b-2 border-transparent hover:border-blue-500 transition duration-200;
+            margin-right: 0.5rem; /* Added space between tabs */
+        }
+        .tab-button:last-child {
+            margin-right: 0; /* No margin on the last tab */
+        }
+        .tab-button.active {
+            @apply border-blue-600 text-blue-600;
+        }
+        .tab-content {
+            @apply p-6 bg-gray-50 rounded-b-lg border border-t-0 border-gray-200;
+        }
+        /* Accordion styles */
+        .accordion-item:not(:last-child) .accordion-header {
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        .accordion-item:not(:first-child) .accordion-header {
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+        .accordion-header {
+            @apply flex justify-between items-center w-full p-4 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition duration-200;
+        }
+        .accordion-content {
+            @apply p-4 bg-white border border-t-0 border-gray-200 rounded-b-lg;
+            display: none;
+        }
+        .accordion-content.open {
+            display: block;
+        }
+        /* Drag and Drop styles */
+        .drop-area {
+            border: 2px dashed #cbd5e1; /* slate-300 */
+            border-radius: 0.75rem;
+            padding: 2rem;
+            text-align: center;
+            font-size: 1.125rem;
+            color: #64748b; /* slate-500 */
+            transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+        }
+        .drop-area.drag-over {
+            background-color: #e0f2fe; /* blue-50 */
+            border-color: #3b82f6; /* blue-500 */
+        }
+        /* Slider styles */
+        .slider-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            border-radius: 0.75rem;
+        }
+        .slider-wrapper {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+        }
+        .slider-item {
+            min-width: 100%;
+            box-sizing: border-box;
+            background-color: #bfdbfe; /* blue-200 */
+            color: #1e3a8a; /* blue-900 */
+            padding: 3rem;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .slider-nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            z-index: 1;
+            transition: background-color 0.3s;
+        }
+        .slider-nav-button:hover {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        .slider-nav-button.prev {
+            left: 1rem;
+        }
+        .slider-nav-button.next {
+            right: 1rem;
+        }
+        /* Mouse Events */
+        .mouse-event-box {
+            @apply w-48 h-24 bg-purple-100 border-2 border-purple-400 rounded-lg flex items-center justify-center text-purple-800 font-semibold cursor-pointer;
+        }
+        .mouse-event-box:active {
+            @apply bg-purple-200;
+        }
+        /* iframe styling */
+        .iframe-container {
+            @apply border border-gray-300 rounded-lg overflow-hidden;
+        }
+        /* Advanced Filter Dropdown */
+        .filter-dropdown-container {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+        }
+        .filter-dropdown-content {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 20;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+        .filter-dropdown-content.open {
+            display: block;
+        }
+        .filter-dropdown-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .filter-dropdown-item:hover {
+            background-color: #f0f4f8;
+        }
+        .filter-dropdown-item input[type="checkbox"] {
+            margin-right: 0.5rem;
+        }
+        /* Shadow DOM File Uploader */
+        #shadow-file-uploader-container {
+            border: 1px solid #cbd5e1;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background-color: #f8fafc;
+        }
+        /* Styles for the custom element's shadow DOM content */
+        .shadow-file-input-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            border: 2px dashed #94a3b8;
+            border-radius: 0.5rem;
+            background-color: #e2e8f0;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .shadow-file-input-wrapper:hover {
+            background-color: #cbd5e1;
+        }
+        .shadow-file-input-wrapper input[type="file"] {
+            display: none; /* Hide the native input */
+        }
+        .shadow-file-input-wrapper .file-icon {
+            font-size: 2.5rem;
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+        .shadow-file-input-wrapper .file-text {
+            color: #475569;
+            font-weight: 600;
+        }
+        .shadow-file-status {
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: #475569;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <nav class="bg-blue-700 p-4 shadow-md">
+        <div class="container flex justify-between items-center">
+            <a href="#" class="text-white text-2xl font-bold">Cypress Demo</a>
+            <ul class="hidden md:flex space-x-6">
+                <li><a href="#forms" class="text-white hover:text-blue-200 transition duration-200">Forms</a></li>
+                <li><a href="#uploads" class="text-white hover:text-blue-200 transition duration-200">Uploads</a></li>
+                <li><a href="#interactions" class="text-white hover:text-blue-200 transition duration-200">Interactions</a></li>
+                <li><a href="#dynamic-content" class="text-white hover:text-blue-200 transition duration-200">Dynamic</a></li>
+                <li><a href="#e-commerce" class="text-white hover:text-blue-200 transition duration-200">E-commerce</a></li>
+                <li><a href="#admin" class="text-white hover:text-blue-200 transition duration-200">Admin</a></li>
+                <li><a href="#advanced" class="text-white hover:text-blue-200 transition duration-200">Advanced</a></li>
+            </ul>
+            <button id="mobile-menu-button" class="md:hidden text-white text-2xl focus:outline-none">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <div id="mobile-menu-sidebar" class="fixed top-0 right-0 h-full w-64 bg-blue-800 text-white shadow-lg transform translate-x-full transition-transform duration-300 ease-in-out z-50">
+            <div class="p-4 flex justify-end">
+                <button id="close-mobile-menu" class="text-white text-2xl focus:outline-none">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <ul class="flex flex-col p-4 space-y-4">
+                <li><a href="#forms" class="block text-lg hover:text-blue-200 transition duration-200">Forms</a></li>
+                <li><a href="#uploads" class="block text-lg hover:text-blue-200 transition duration-200">Uploads</a></li>
+                <li><a href="#interactions" class="block text-lg hover:text-blue-200 transition duration-200">Interactions</a></li>
+                <li><a href="#dynamic-content" class="block text-lg hover:text-blue-200 transition duration-200">Dynamic</a></li>
+                <li><a href="#e-commerce" class="block text-lg hover:text-blue-200 transition duration-200">E-commerce</a></li>
+                <li><a href="#admin" class="block text-lg hover:text-blue-200 transition duration-200">Admin</a></li>
+                <li><a href="#advanced" class="block text-lg hover:text-blue-200 transition duration-200">Advanced</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container py-8">
+        <section class="card text-center mb-12">
+            <h1 class="text-5xl font-extrabold text-blue-800 mb-4">Welcome to the Cypress Demo Site!</h1>
+            <p class="text-lg text-gray-700">This site is designed to provide a comprehensive playground for your Cypress automation testing journey. Explore various UI elements and interactions all in one place.</p>
+        </section>
+
+        <section id="forms" class="card">
+            <h2 class="section-title">Forms with Various Input Types</h2>
+            <form id="demo-form" class="space-y-6">
+                <div>
+                    <label for="text-input" class="block text-gray-700 font-semibold mb-2">Text Input:</label>
+                    <input type="text" id="text-input" name="textInput" placeholder="Enter some text" class="input-field">
+                </div>
+                <div>
+                    <label for="password-input" class="block text-gray-700 font-semibold mb-2">Password:</label>
+                    <input type="password" id="password-input" name="passwordInput" placeholder="Enter your password" class="input-field">
+                </div>
+                <div>
+                    <label for="number-input" class="block text-gray-700 font-semibold mb-2">Number Input:</label>
+                    <input type="number" id="number-input" name="numberInput" placeholder="Enter a number" class="input-field">
+                </div>
+                <div>
+                    <label for="dropdown-select" class="block text-gray-700 font-semibold mb-2">Dropdown Select:</label>
+                    <select id="dropdown-select" name="dropdownSelect" class="input-field">
+                        <option value="">--Please choose an option--</option>
+                        <option value="option1">Option One</option>
+                        <option value="option2">Option Two</option>
+                        <option value="option3">Option Three</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Radio Buttons:</label>
+                    <div class="flex items-center space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="radioOption" value="radio1" class="form-radio text-blue-600" id="radio1">
+                            <span class="ml-2 text-gray-700">Radio Option 1</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="radioOption" value="radio2" class="form-radio text-blue-600" id="radio2">
+                            <span class="ml-2 text-gray-700">Radio Option 2</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Checkboxes:</label>
+                    <div class="flex items-center space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" id="checkbox1" name="checkboxOption1" value="check1" class="form-checkbox text-blue-600">
+                            <span class="ml-2 text-gray-700">Checkbox 1</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" id="checkbox2" name="checkboxOption2" value="check2" class="form-checkbox text-blue-600">
+                            <span class="ml-2 text-gray-700">Checkbox 2</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label for="textarea-input" class="block text-gray-700 font-semibold mb-2">Textarea:</label>
+                    <textarea id="textarea-input" name="textareaInput" rows="4" placeholder="Enter longer text here..." class="input-field"></textarea>
+                </div>
+                <button type="submit" class="btn-primary" id="submit-form-btn">Submit Form</button>
+                <div id="form-submission-message" class="mt-4 p-3 bg-green-100 text-green-700 rounded-lg hidden">Form submitted successfully!</div>
+            </form>
+        </section>
+
+        <section id="uploads" class="card">
+            <h2 class="section-title">File Uploads</h2>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Single File Upload</h3>
+                <input type="file" id="single-file-input" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                <p id="single-file-status" class="mt-2 text-sm text-gray-600"></p>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Multiple File Upload</h3>
+                <input type="file" id="multiple-file-input" multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                <p id="multiple-file-status" class="mt-2 text-sm text-gray-600"></p>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Drag and Drop File Upload</h3>
+                <div id="drop-area" class="drop-area">
+                    Drag and drop files here, or <span class="text-blue-600 cursor-pointer" id="browse-files-link">browse</span>
+                    <input type="file" id="drag-drop-file-input" multiple class="hidden">
+                </div>
+                <p id="drag-drop-status" class="mt-2 text-sm text-gray-600"></p>
+            </div>
+
+            <div class="mt-8" id="shadow-file-uploader-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">File Upload with Shadow DOM</h3>
+                <p class="text-sm text-gray-600 mb-2">
+                    This file input is inside a custom element with a Shadow DOM. Cypress needs specific commands to interact with it.
+                </p>
+                <shadow-file-uploader id="shadow-file-input"></shadow-file-uploader>
+            </div>
+        </section>
+
+        <section id="interactions" class="card">
+            <h2 class="section-title">Interactions & Dialogs</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Hover & Tooltip</h3>
+                    <div class="tooltip-container">
+                        <button class="btn-secondary" id="hover-button">Hover over me</button>
+                        <span class="tooltip-text" id="hover-tooltip">This is a helpful tooltip!</span>
+                    </div>
+                    <p class="mt-4 text-gray-600">Hovering over the button reveals a tooltip.</p>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Modals & Popups</h3>
+                    <button id="open-modal-btn" class="btn-primary">Open Custom Modal</button>
+                    <p class="mt-4 text-gray-600">Click the button to open a custom modal dialog.</p>
+                </div>
+            </div>
+
+            <div id="custom-modal-overlay" class="modal-overlay">
+                <div class="modal-content">
+                    <h3 class="text-2xl font-bold mb-4">Custom Alert Message</h3>
+                    <p class="text-gray-700 mb-6" id="custom-modal-message">This is a custom alert message, not a native browser alert.</p>
+                    <div class="flex justify-end space-x-4">
+                        <button id="custom-modal-ok-btn" class="btn-primary">OK</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Native Browser Dialogs (Alerts, Confirmations & Prompts)</h3>
+                <p class="text-sm text-red-600 mb-4">
+                    **Important Note:** When running this demo within an iframe (like in the Canvas environment) or in a headless browser (like Cypress by default), native browser `alert()`, `confirm()`, and `prompt()` dialogs will **not visually appear** in the main window. However, Cypress *does* interact with them.
+                    To test these, you typically use `cy.on('window:alert', (str) => { /* assertions */ })` or `cy.on('window:confirm', (str) => { /* assertions and return true/false */ })`
+                    and `cy.stub(window, 'prompt')` to control the input and assertions in your Cypress tests.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <button id="show-native-alert-btn" class="btn-primary">Click for JS Alert</button>
+                    <button id="show-native-confirm-btn" class="btn-primary">Click for JS Confirm</button>
+                    <button id="show-native-prompt-btn" class="btn-primary">Click for JS Prompt</button>
+                </div>
+                <p id="dialog-result" class="mt-4 p-2 bg-gray-100 rounded-lg text-gray-700">Event status: None</p>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Buttons & Links</h3>
+                <div class="flex flex-wrap gap-4 items-center">
+                    <button class="btn-primary" id="primary-button">Primary Button</button>
+                    <button class="btn-secondary" id="secondary-button">Secondary Button</button>
+                    <a href="#forms" class="text-blue-600 hover:underline text-lg font-medium" id="internal-link">Internal Link</a>
+                    <a href="https://www.google.com" target="_blank" class="text-green-600 hover:underline text-lg font-medium" id="external-link">External Link (Google)</a>
+                </div>
+                <p id="button-click-status" class="mt-4 p-2 bg-gray-100 rounded-lg text-gray-700">Button click status: None</p>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Tabs</h3>
+                <div class="flex border-b border-gray-200 mb-4" id="tab-buttons-container">
+                    <button class="tab-button active" data-tab="tab1" id="tab-btn-1">Tab 1</button>
+                    <button class="tab-button" data-tab="tab2" id="tab-btn-2">Tab 2</button>
+                    <button class="tab-button" data-tab="tab3" id="tab-btn-3">Tab 3</button>
+                </div>
+                <div id="tab-content-container">
+                    <div id="tab1" class="tab-content block">
+                        <p>Content for Tab 1. This can be used for displaying different sections of information without navigating to a new page.</p>
+                        <input type="text" placeholder="Input in Tab 1" class="input-field mt-4" id="tab1-input">
+                    </div>
+                    <div id="tab2" class="tab-content hidden">
+                        <p>Content for Tab 2. More details here.</p>
+                        <button class="btn-primary mt-4" id="tab2-button">Action in Tab 2</button>
+                        <p id="tab2-action-status" class="mt-2 text-sm text-gray-600"></p>
+                    </div>
+                    <div id="tab3" class="tab-content hidden">
+                        <p>Content for Tab 3. Final section.</p>
+                        <img src="https://placehold.co/200x100/e0f2fe/1e3a8a?text=Image+in+Tab" alt="Placeholder in Tab 3" class="mt-4 rounded-lg">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Accordions</h3>
+                <div class="accordion-item mb-2">
+                    <div class="accordion-header" data-accordion="panel1" id="accordion-header-1">
+                        <span class="font-semibold text-gray-800">Accordion Panel 1</span>
+                        <i class="fas fa-chevron-down transform transition-transform duration-200"></i>
+                    </div>
+                    <div id="panel1" class="accordion-content">
+                        <p>This is the content for Accordion Panel 1. It expands and collapses.</p>
+                        <p>You can put text, images, or other elements here.</p>
+                    </div>
+                </div>
+                <div class="accordion-item mb-2">
+                    <div class="accordion-header" data-accordion="panel2" id="accordion-header-2">
+                        <span class="font-semibold text-gray-800">Accordion Panel 2</span>
+                        <i class="fas fa-chevron-down transform transition-transform duration-200"></i>
+                    </div>
+                    <div id="panel2" class="accordion-content">
+                        <p>Content for Accordion Panel 2.</p>
+                        <button class="btn-secondary mt-2" id="accordion-button-2">Click Me</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Slider/Carousel</h3>
+                <div class="slider-container">
+                    <div class="slider-wrapper" id="image-slider">
+                        <div class="slider-item">Slide 1: Welcome!</div>
+                        <div class="slider-item">Slide 2: Explore Features</div>
+                        <div class="slider-item">Slide 3: Happy Testing!</div>
+                    </div>
+                    <button class="slider-nav-button prev" id="slider-prev"><i class="fas fa-chevron-left"></i></button>
+                    <button class="slider-nav-button next" id="slider-next"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Date Pickers</h3>
+                <div>
+                    <label for="date-input" class="block text-gray-700 font-semibold mb-2">Select a Date:</label>
+                    <input type="date" id="date-input" class="input-field max-w-xs">
+                </div>
+                <p id="selected-date-display" class="mt-2 text-sm text-gray-600"></p>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Keyboard Interactions</h3>
+                <input type="text" id="keyboard-input" placeholder="Type here and press Enter" class="input-field max-w-md">
+                <p id="keyboard-status" class="mt-2 text-sm text-gray-600">Press 'Enter' after typing in the input field.</p>
+            </div>
+        </section>
+
+        <section id="dynamic-content" class="card">
+            <h2 class="section-title">Dynamic Content & Scrolling</h2>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Search with Autocomplete (Auto-suggest Dropdown)</h3>
+                <p class="text-sm text-gray-600 mb-2">
+                    This acts as an auto-suggest dropdown. Type "A", "B", "O", etc., to see suggestions.
+                </p>
+                <input type="text" id="search-input" placeholder="Search for items (e.g., Apple, Banana)" class="input-field max-w-md">
+                <ul id="autocomplete-results" class="bg-white border border-gray-300 rounded-lg mt-2 max-w-md shadow-md hidden"></ul>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Advanced Filter Dropdown (Multi-select Simulation)</h3>
+                <p class="text-sm text-gray-600 mb-2">
+                    Click the input to open the filter options. You can select multiple items.
+                </p>
+                <div class="filter-dropdown-container">
+                    <input type="text" id="advanced-filter-input" class="input-field cursor-pointer" placeholder="Select categories..." readonly>
+                    <div id="advanced-filter-content" class="filter-dropdown-content">
+                        </div>
+                </div>
+                <p id="selected-filters" class="mt-2 text-sm text-gray-600">Selected: None</p>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Dynamic Dropdown</h3>
+                <p class="text-sm text-gray-600 mb-2">
+                    Selecting a country will dynamically update the available cities.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="w-full sm:w-1/2">
+                        <label for="country-select" class="block text-gray-700 font-semibold mb-2">Country:</label>
+                        <select id="country-select" class="input-field">
+                            <option value="">--Select Country--</option>
+                            <option value="USA">USA</option>
+                            <option value="Canada">Canada</option>
+                            <option value="UK">UK</option>
+                        </select>
+                    </div>
+                    <div class="w-full sm:w-1/2">
+                        <label for="city-select" class="block text-gray-700 font-semibold mb-2">City:</label>
+                        <select id="city-select" class="input-field" disabled>
+                            <option value="">--Select City--</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Tables with Sorting/Filtering/Pagination</h3>
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                    <input type="text" id="table-filter-input" placeholder="Filter by name..." class="input-field w-full sm:w-1/3">
+                    <select id="table-sort-select" class="input-field w-full sm:w-1/4">
+                        <option value="id">Sort by ID</option>
+                        <option value="name">Sort by Name</option>
+                        <option value="value">Sort by Value</option>
+                    </select>
+                </div>
+                <div class="overflow-x-auto rounded-lg shadow-md">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-gray-100 border-b border-gray-200">
+                            <tr>
+                                <th class="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" data-sort-by="id">ID <i class="fas fa-sort text-gray-400 ml-1"></i></th>
+                                <th class="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" data-sort-by="name">Name <i class="fas fa-sort text-gray-400 ml-1"></i></th>
+                                <th class="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" data-sort-by="value">Value <i class="fas fa-sort text-gray-400 ml-1"></i></th>
+                                <th class="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table-body" class="divide-y divide-gray-200">
+                            </tbody>
+                    </table>
+                </div>
+                <div class="flex justify-between items-center mt-4">
+                    <button id="prev-page-btn" class="btn-secondary">&larr; Previous</button>
+                    <span id="page-info" class="text-gray-700">Page 1 of X</span>
+                    <button id="next-page-btn" class="btn-secondary">Next &rarr;</button>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Scroll Testing Area (Long List)</h3>
+                <div id="scroll-area" class="h-96 overflow-y-auto border border-gray-300 rounded-lg p-4 bg-gray-50">
+                    <p class="text-gray-600">Scroll down to load more items...</p>
+                </div>
+                <p id="scroll-status" class="mt-2 text-sm text-gray-600"></p>
+            </div>
+        </section>
+
+        <section id="e-commerce" class="card">
+            <h2 class="section-title">E-commerce Functionality (Cart)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <img src="https://placehold.co/300x200/bfdbfe/1e3a8a?text=Product+1" alt="Product 1" class="w-full h-40 object-cover rounded-md mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Awesome Gadget</h3>
+                    <p class="text-gray-600 mb-4">A must-have gadget for your daily needs.</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-2xl font-bold text-blue-600">$49.99</span>
+                        <button class="btn-primary add-to-cart-btn" data-product-id="1" data-product-name="Awesome Gadget" data-product-price="49.99">Add to Cart</button>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <img src="https://placehold.co/300x200/dbeafe/1e3a8a?text=Product+2" alt="Product 2" class="w-full h-40 object-cover rounded-md mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Super Widget</h3>
+                    <p class="text-gray-600 mb-4">Enhance your productivity with this super widget.</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-2xl font-bold text-blue-600">$29.50</span>
+                        <button class="btn-primary add-to-cart-btn" data-product-id="2" data-product-name="Super Widget" data-product-price="29.50">Add to Cart</button>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <img src="https://placehold.co/300x200/e0f2fe/1e3a8a?text=Product+3" alt="Product 3" class="w-full h-40 object-cover rounded-md mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Mega Device</h3>
+                    <p class="text-gray-600 mb-4">Experience the future with our mega device.</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-2xl font-bold text-blue-600">$99.00</span>
+                        <button class="btn-primary add-to-cart-btn" data-product-id="3" data-product-name="Mega Device" data-product-price="99.00">Add to Cart</button>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Your Shopping Cart</h3>
+            <div id="cart-items" class="bg-gray-50 p-6 rounded-lg shadow-inner border border-gray-200">
+                <p class="text-gray-600" id="empty-cart-message">Your cart is empty.</p>
+                <ul id="cart-list" class="space-y-4">
+                    </ul>
+                <div id="cart-summary" class="mt-6 pt-4 border-t border-gray-200 text-right font-bold text-lg hidden">
+                    Total: <span id="cart-total">$0.00</span>
+                </div>
+                <button id="checkout-btn" class="btn-primary mt-6 w-full hidden">Proceed to Checkout</button>
+                <div id="checkout-success-message" class="mt-4 p-3 bg-green-100 text-green-700 rounded-lg hidden">Checkout successful! Your order has been placed.</div>
+            </div>
+        </section>
+
+        <section id="admin" class="card">
+            <h2 class="section-title">Admin Panel</h2>
+
+            <div id="admin-login-area" class="max-w-md mx-auto p-6 bg-gray-50 rounded-lg shadow-inner">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">Admin Login</h3>
+                <form id="admin-login-form" class="space-y-4">
+                    <div>
+                        <label for="admin-username" class="block text-gray-700 font-semibold mb-2">Username:</label>
+                        <input type="text" id="admin-username" class="input-field" value="admin">
+                    </div>
+                    <div>
+                        <label for="admin-password" class="block text-gray-700 font-semibold mb-2">Password:</label>
+                        <input type="password" id="admin-password" class="input-field" value="password123">
+                    </div>
+                    <button type="submit" class="btn-primary w-full" id="admin-login-btn">Login</button>
+                    <p id="admin-login-message" class="text-red-600 text-center mt-4 hidden">Invalid credentials.</p>
+                </form>
+            </div>
+
+            <div id="admin-dashboard-area" class="hidden">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">Admin Dashboard</h3>
+                <p id="admin-welcome-message" class="text-green-700 text-center mb-4 hidden">Welcome, Admin!</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-blue-50 p-6 rounded-lg shadow-md">
+                        <h4 class="text-xl font-semibold text-blue-800 mb-4">User Management</h4>
+                        <p class="text-blue-700 mb-4">View and manage user accounts.</p>
+                        <button class="btn-secondary">View Users</button>
+                    </div>
+                    <div class="bg-green-50 p-6 rounded-lg shadow-md">
+                        <h4 class="text-xl font-semibold text-green-800 mb-4">Product Management</h4>
+                        <p class="text-green-700 mb-4">Add, edit, or delete products.</p>
+                        <button class="btn-secondary">Manage Products</button>
+                    </div>
+                    <div class="bg-yellow-50 p-6 rounded-lg shadow-md">
+                        <h4 class="text-xl font-semibold text-yellow-800 mb-4">Order Management</h4>
+                        <p class="text-yellow-700 mb-4">Process and track customer orders.</p>
+                        <button class="btn-secondary">View Orders</button>
+                    </div>
+                    <div class="bg-red-50 p-6 rounded-lg shadow-md">
+                        <h4 class="text-xl font-semibold text-red-800 mb-4">System Settings</h4>
+                        <p class="text-red-700 mb-4">Configure application settings.</p>
+                        <button class="btn-secondary">Settings</button>
+                    </div>
+                </div>
+                <button id="admin-logout-btn" class="btn-secondary mt-8 block mx-auto">Logout</button>
+            </div>
+        </section>
+
+        <section id="advanced" class="card">
+            <h2 class="section-title">Advanced Interactions</h2>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Window Handling</h3>
+                <button id="open-new-window-btn" class="btn-primary">Open New Window</button>
+                <p class="mt-2 text-sm text-gray-600">Clicking this button will open a new blank browser window/tab.</p>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Iframe Handling</h3>
+                <p class="text-sm text-gray-600 mb-2">
+                    This section contains an iframe. To interact with elements inside, Cypress requires switching context.
+                </p>
+                <div class="iframe-container w-full h-64">
+                    <iframe id="my-iframe" srcdoc="
+                        <html lang='en'>
+                        <head>
+                            <style>
+                                body { font-family: sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f9ff; color: #0c4a6e; }
+                                h2 { color: #075985; }
+                                input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px; }
+                                button { background-color: #3b82f6; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; }
+                                button:hover { background-color: #2563eb; }
+                                p { margin-top: 10px; color: green; }
+                            </style>
+                        </head>
+                        <body>
+                            <h2>Content inside Iframe</h2>
+                            <p>This text is inside an iframe.</p>
+                            <input type='text' id='iframe-input' placeholder='Enter text here'>
+                            <button id='iframe-submit-button'>Submit (Iframe)</button>
+                            <p id='iframe-message'></p>
+                            <script>
+                                document.getElementById('iframe-submit-button').addEventListener('click', () => {
+                                    const inputValue = document.getElementById('iframe-input').value;
+                                    document.getElementById('iframe-message').textContent = 'Input submitted: ' + inputValue;
+                                });
+                            </script>
+                        </body>
+                        </html>
+                    " class="w-full h-full border-none"></iframe>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Mouse Operations (Double Click & Right Click)</h3>
+                <div class="flex flex-wrap gap-4">
+                    <div id="double-click-box" class="mouse-event-box">
+                        Double Click Me
+                    </div>
+                    <div id="right-click-box" class="mouse-event-box">
+                        Right Click Me
+                    </div>
+                </div>
+                <p id="mouse-event-status" class="mt-4 p-2 bg-gray-100 rounded-lg text-gray-700">Event status: None</p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2 class="section-title">Responsive Layout Elements</h2>
+            <p class="text-gray-700 mb-4">
+                This entire website is built with a responsive design using Tailwind CSS.
+                Try resizing your browser window (especially narrowing it) to see how the layout adapts to different screen sizes.
+                Elements like the navigation menu, grid layouts, and text sizes will adjust automatically.
+                The mobile navigation menu (top right icon) is visible on smaller screens.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 bg-blue-50 rounded-lg">
+                <div class="p-4 bg-blue-100 rounded-md text-center text-blue-800">Small Screen (1 col)</div>
+                <div class="p-4 bg-blue-100 rounded-md text-center text-blue-800">Medium Screen (2 cols)</div>
+                <div class="p-4 bg-blue-100 rounded-md text-center text-blue-800">Large Screen (3 cols)</div>
+                <div class="p-4 bg-blue-100 rounded-md text-center text-blue-800">Extra Large (4 cols)</div>
+            </div>
+            <p class="mt-4 text-gray-600">
+                The boxes above demonstrate how the number of columns changes based on screen width
+                (e.g., `sm:grid-cols-2`, `md:grid-cols-3`, `lg:grid-cols-4`).
+            </p>
+        </section>
+
+        <footer class="text-center text-gray-600 py-8 mt-12 border-t border-gray-200">
+            <p>&copy; 2024 Cypress Demo Site. All rights reserved.</p>
+            <p>Designed for automation testing practice.</p>
+        </footer>
+    </main>
+
+    <script>
+        // --- Navigation Menu (Mobile Sidebar) ---
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const closeMobileMenuButton = document.getElementById('close-mobile-menu');
+        const mobileMenuSidebar = document.getElementById('mobile-menu-sidebar');
+        const navLinks = document.querySelectorAll('#mobile-menu-sidebar a');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenuSidebar.classList.remove('translate-x-full');
+            mobileMenuSidebar.classList.add('translate-x-0');
+        });
+
+        closeMobileMenuButton.addEventListener('click', () => {
+            mobileMenuSidebar.classList.remove('translate-x-0');
+            mobileMenuSidebar.classList.add('translate-x-full');
+        });
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                // Close sidebar when a link is clicked
+                mobileMenuSidebar.classList.remove('translate-x-0');
+                mobileMenuSidebar.classList.add('translate-x-full');
+            });
+        });
+
+        // --- Forms Section ---
+        const demoForm = document.getElementById('demo-form');
+        const formSubmissionMessage = document.getElementById('form-submission-message');
+
+        demoForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            // In a real application, you'd send this data to a server.
+            // For demo purposes, we just show a success message.
+            const formData = new FormData(demoForm);
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            console.log('Form submitted:', data);
+
+            formSubmissionMessage.classList.remove('hidden');
+            setTimeout(() => {
+                formSubmissionMessage.classList.add('hidden');
+                demoForm.reset(); // Clear the form
+            }, 3000);
+        });
+
+        // --- File Upload Section ---
+        const singleFileInput = document.getElementById('single-file-input');
+        const singleFileStatus = document.getElementById('single-file-status');
+        const multipleFileInput = document.getElementById('multiple-file-input');
+        const multipleFileStatus = document.getElementById('multiple-file-status');
+        const dropArea = document.getElementById('drop-area');
+        const dragDropFileInput = document.getElementById('drag-drop-file-input');
+        const browseFilesLink = document.getElementById('browse-files-link');
+        const dragDropStatus = document.getElementById('drag-drop-status');
+
+        // Helper to display file info
+        function displayFileInfo(files, statusElement) {
+            if (files.length === 0) {
+                statusElement.textContent = '';
+                return;
+            }
+            let fileNames = Array.from(files).map(file => file.name).join(', ');
+            statusElement.textContent = `Selected: ${fileNames} (${files.length} file(s))`;
+        }
+
+        singleFileInput.addEventListener('change', (e) => {
+            displayFileInfo(e.target.files, singleFileStatus);
+        });
+
+        multipleFileInput.addEventListener('change', (e) => {
+            displayFileInfo(e.target.files, multipleFileStatus);
+        });
+
+        // Drag and Drop functionality
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.add('drag-over'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.remove('drag-over'), false);
+        });
+
+        dropArea.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            displayFileInfo(files, dragDropStatus);
+            // In a real scenario, you'd process these files
+            console.log('Dropped files:', files);
+            // Assign files to the hidden input for Cypress to interact with
+            dragDropFileInput.files = files;
+        }, false);
+
+        browseFilesLink.addEventListener('click', () => {
+            dragDropFileInput.click();
+        });
+
+        dragDropFileInput.addEventListener('change', (e) => {
+            displayFileInfo(e.target.files, dragDropStatus);
+        });
+
+        // --- Shadow DOM File Uploader Custom Element ---
+        // Define the template for the custom element's Shadow DOM
+        const shadowFileUploaderTemplate = document.createElement('template');
+        shadowFileUploaderTemplate.innerHTML = `
+            <style>
+                .shadow-file-input-wrapper {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 1rem;
+                    border: 2px dashed #94a3b8;
+                    border-radius: 0.5rem;
+                    background-color: #e2e8f0;
+                    cursor: pointer;
+                    transition: background-color 0.2s ease-in-out;
+                }
+                .shadow-file-input-wrapper:hover {
+                    background-color: #cbd5e1;
+                }
+                .shadow-file-input-wrapper input[type="file"] {
+                    display: none; /* Hide the native input */
+                }
+                .shadow-file-input-wrapper .file-icon {
+                    font-size: 2.5rem;
+                    color: #475569;
+                    margin-bottom: 0.5rem;
+                }
+                .shadow-file-input-wrapper .file-text {
+                    color: #475569;
+                    font-weight: 600;
+                }
+                .shadow-file-status {
+                    margin-top: 1rem;
+                    font-size: 0.875rem;
+                    color: #475569;
+                    text-align: center;
+                }
+            </style>
+            <div class="shadow-file-input-wrapper">
+                <i class="fas fa-cloud-upload-alt file-icon"></i>
+                <span class="file-text">Click to upload or drag & drop</span>
+                <input type="file" id="shadow-file-input-actual">
+            </div>
+            <p class="shadow-file-status" id="shadow-file-status">No file chosen</p>
+        `;
+
+        // Define the custom element class
+        class ShadowFileUploader extends HTMLElement {
+            constructor() {
+                super();
+                // Attach a shadow root to the custom element
+                this.attachShadow({ mode: 'open' }); // 'open' allows JS access from outside
+                // Append the template content to the shadow root
+                this.shadowRoot.appendChild(shadowFileUploaderTemplate.content.cloneNode(true));
+
+                // Get elements from the shadow DOM
+                this.fileInput = this.shadowRoot.getElementById('shadow-file-input-actual');
+                this.statusText = this.shadowRoot.getElementById('shadow-file-status');
+                this.wrapper = this.shadowRoot.querySelector('.shadow-file-input-wrapper');
+
+                // Add event listeners
+                this.wrapper.addEventListener('click', () => {
+                    this.fileInput.click(); // Trigger the hidden file input click
+                });
+
+                this.fileInput.addEventListener('change', () => {
+                    if (this.fileInput.files.length > 0) {
+                        this.statusText.textContent = `Selected: ${this.fileInput.files[0].name}`;
+                    } else {
+                        this.statusText.textContent = 'No file chosen';
+                    }
+                });
+
+                // Drag and drop for shadow DOM
+                this.wrapper.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    this.wrapper.style.backgroundColor = '#cbd5e1'; // Hover effect
+                });
+                this.wrapper.addEventListener('dragleave', () => {
+                    this.wrapper.style.backgroundColor = '#e2e8f0'; // Reset background
+                });
+                this.wrapper.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    this.wrapper.style.backgroundColor = '#e2e8f0'; // Reset background
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        this.fileInput.files = files; // Assign dropped files to input
+                        this.statusText.textContent = `Selected: ${files[0].name}`;
+                    }
+                });
+            }
+        }
+        // Register the custom element
+        customElements.define('shadow-file-uploader', ShadowFileUploader);
+
+
+        // --- Modals & Popups ---
+        const openModalBtn = document.getElementById('open-modal-btn');
+        const customModalOverlay = document.getElementById('custom-modal-overlay');
+        const customModalOkBtn = document.getElementById('custom-modal-ok-btn');
+        const dialogResult = document.getElementById('dialog-result'); // Reusing for native dialog feedback
+
+        openModalBtn.addEventListener('click', () => {
+            customModalOverlay.classList.add('open');
+        });
+
+        customModalOkBtn.addEventListener('click', () => {
+            customModalOverlay.classList.remove('open');
+        });
+
+        // Close custom modal if clicking outside content
+        customModalOverlay.addEventListener('click', (e) => {
+            if (e.target === customModalOverlay) {
+                customModalOverlay.classList.remove('open');
+            }
+        });
+
+        // --- Native Browser Dialogs (Alerts, Confirmations & Prompts) ---
+        const showNativeAlertBtn = document.getElementById('show-native-alert-btn');
+        const showNativeConfirmBtn = document.getElementById('show-native-confirm-btn');
+        const showNativePromptBtn = document.getElementById('show-native-prompt-btn');
+
+        showNativeAlertBtn.addEventListener('click', () => {
+            alert('This is a simple native alert message!');
+            // This line will execute after the alert is dismissed (or handled by Cypress)
+            dialogResult.textContent = 'Native Alert triggered and dismissed.';
+        });
+
+        showNativeConfirmBtn.addEventListener('click', () => {
+            const result = confirm('Do you confirm this native action?');
+            dialogResult.textContent = `Native Confirmation triggered. Result: ${result ? 'Confirmed' : 'Cancelled'}`;
+        });
+
+        showNativePromptBtn.addEventListener('click', () => {
+            const result = prompt('Please enter your name for native prompt:', 'Guest');
+            dialogResult.textContent = `Native Prompt triggered. Result: ${result ? `Hello, ${result}!` : 'Prompt cancelled.'}`;
+        });
+
+        // --- Buttons & Links ---
+        const primaryButton = document.getElementById('primary-button');
+        const secondaryButton = document.getElementById('secondary-button');
+        const buttonClickStatus = document.getElementById('button-click-status');
+
+        primaryButton.addEventListener('click', () => {
+            buttonClickStatus.textContent = 'Button click status: Primary Button Clicked!';
+            setTimeout(() => { buttonClickStatus.textContent = 'Button click status: None'; }, 2000);
+        });
+
+        secondaryButton.addEventListener('click', () => {
+            buttonClickStatus.textContent = 'Button click status: Secondary Button Clicked!';
+            setTimeout(() => { buttonClickStatus.textContent = 'Button click status: None'; }, 2000);
+        });
+
+
+        // --- Tabs ---
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const tab2Button = document.getElementById('tab2-button');
+        const tab2ActionStatus = document.getElementById('tab2-action-status');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Deactivate all tabs and hide all content
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.add('hidden'));
+                tabContents.forEach(content => content.classList.remove('block')); // Ensure 'block' is removed
+
+                // Activate clicked tab and show its content
+                button.classList.add('active');
+                const targetTabId = button.dataset.tab;
+                document.getElementById(targetTabId).classList.remove('hidden');
+                document.getElementById(targetTabId).classList.add('block'); // Ensure 'block' is added
+            });
+        });
+
+        tab2Button.addEventListener('click', () => {
+            tab2ActionStatus.textContent = 'Action button in Tab 2 clicked!';
+            setTimeout(() => { tab2ActionStatus.textContent = ''; }, 2000);
+        });
+
+        // --- Accordions ---
+        const accordionHeaders = document.querySelectorAll('.accordion-header');
+
+        accordionHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const content = document.getElementById(header.dataset.accordion);
+                const icon = header.querySelector('i');
+
+                // Toggle visibility of content
+                content.classList.toggle('open');
+                // Rotate icon
+                icon.classList.toggle('rotate-180');
+            });
+        });
+
+        // --- Slider/Carousel ---
+        const sliderWrapper = document.getElementById('image-slider');
+        const sliderItems = document.querySelectorAll('.slider-item');
+        const sliderPrevBtn = document.getElementById('slider-prev');
+        const sliderNextBtn = document.getElementById('slider-next');
+        let currentIndex = 0;
+
+        function updateSlider() {
+            // Ensure sliderItems[0] exists before accessing clientWidth
+            if (sliderItems.length > 0) {
+                const itemWidth = sliderItems[0].clientWidth;
+                sliderWrapper.style.transform = `translateX(${-currentIndex * itemWidth}px)`;
+            }
+        }
+
+        sliderNextBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex + 1) % sliderItems.length;
+            updateSlider();
+        });
+
+        sliderPrevBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex - 1 + sliderItems.length) % sliderItems.length;
+            updateSlider();
+        });
+
+        // Update slider on window resize to ensure correct positioning
+        window.addEventListener('resize', updateSlider);
+        // Initial update
+        updateSlider();
+
+        // --- Date Picker ---
+        const dateInput = document.getElementById('date-input');
+        const selectedDateDisplay = document.getElementById('selected-date-display');
+
+        dateInput.addEventListener('change', () => {
+            if (dateInput.value) {
+                selectedDateDisplay.textContent = `Selected Date: ${dateInput.value}`;
+            } else {
+                selectedDateDisplay.textContent = '';
+            }
+        });
+
+        // --- Keyboard Interactions ---
+        const keyboardInput = document.getElementById('keyboard-input');
+        const keyboardStatus = document.getElementById('keyboard-status');
+
+        keyboardInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                keyboardStatus.textContent = `You pressed Enter. Input value: "${keyboardInput.value}"`;
+                keyboardInput.value = ''; // Clear input after enter
+            } else if (e.key === 'Escape') {
+                keyboardStatus.textContent = `You pressed Escape.`;
+            } else {
+                keyboardStatus.textContent = `You pressed: "${e.key}"`;
+            }
+        });
+
+        // --- Search with Autocomplete ---
+        const searchInput = document.getElementById('search-input');
+        const autocompleteResults = document.getElementById('autocomplete-results');
+        const availableItems = ['Apple', 'Banana', 'Orange', 'Grape', 'Strawberry', 'Blueberry', 'Pineapple', 'Mango', 'Cherry', 'Watermelon'];
+
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase();
+            autocompleteResults.innerHTML = '';
+            autocompleteResults.classList.add('hidden');
+
+            if (query.length > 0) {
+                const filteredItems = availableItems.filter(item =>
+                    item.toLowerCase().includes(query)
+                );
+
+                if (filteredItems.length > 0) {
+                    filteredItems.forEach(item => {
+                        const li = document.createElement('li');
+                        li.textContent = item;
+                        li.classList.add('p-2', 'cursor-pointer', 'hover:bg-gray-100');
+                        li.addEventListener('click', () => {
+                            searchInput.value = item;
+                            autocompleteResults.classList.add('hidden');
+                        });
+                        autocompleteResults.appendChild(li);
+                    });
+                    autocompleteResults.classList.remove('hidden');
+                }
+            }
+        });
+
+        // Hide autocomplete results when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !autocompleteResults.contains(e.target)) {
+                autocompleteResults.classList.add('hidden');
+            }
+        });
+
+        // --- Advanced Filter Dropdown ---
+        const advancedFilterInput = document.getElementById('advanced-filter-input');
+        const advancedFilterContent = document.getElementById('advanced-filter-content');
+        const selectedFiltersDisplay = document.getElementById('selected-filters');
+        const filterOptions = ['Category A', 'Category B', 'Category C', 'Category D', 'Category E', 'Category F'];
+        let selectedCategories = new Set();
+
+        function renderAdvancedFilterOptions() {
+            advancedFilterContent.innerHTML = '';
+            filterOptions.forEach(option => {
+                const div = document.createElement('div');
+                div.classList.add('filter-dropdown-item');
+                div.innerHTML = `
+                    <input type="checkbox" id="filter-${option.replace(/\s/g, '-')}" value="${option}" ${selectedCategories.has(option) ? 'checked' : ''}>
+                    <label for="filter-${option.replace(/\s/g, '-')}" class="cursor-pointer">${option}</label>
+                `;
+                div.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        selectedCategories.add(option);
+                    } else {
+                        selectedCategories.delete(option);
+                    }
+                    updateSelectedFiltersDisplay();
+                });
+                advancedFilterContent.appendChild(div);
+            });
+        }
+
+        function updateSelectedFiltersDisplay() {
+            if (selectedCategories.size === 0) {
+                selectedFiltersDisplay.textContent = 'Selected: None';
+                advancedFilterInput.value = '';
+            } else {
+                const sortedCategories = Array.from(selectedCategories).sort();
+                selectedFiltersDisplay.textContent = `Selected: ${sortedCategories.join(', ')}`;
+                advancedFilterInput.value = sortedCategories.join(', ');
+            }
+        }
+
+        advancedFilterInput.addEventListener('focus', () => {
+            renderAdvancedFilterOptions(); // Render options every time it's focused to reflect current selections
+            advancedFilterContent.classList.add('open');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!advancedFilterInput.contains(e.target) && !advancedFilterContent.contains(e.target)) {
+                advancedFilterContent.classList.remove('open');
+            }
+        });
+
+        updateSelectedFiltersDisplay(); // Initial display
+
+        // --- Dynamic Dropdown ---
+        const countrySelect = document.getElementById('country-select');
+        const citySelect = document.getElementById('city-select');
+
+        const citiesByCountry = {
+            "USA": ["New York", "Los Angeles", "Chicago", "Houston"],
+            "Canada": ["Toronto", "Vancouver", "Montreal", "Calgary"],
+            "UK": ["London", "Manchester", "Birmingham", "Glasgow"]
+        };
+
+        countrySelect.addEventListener('change', () => {
+            const selectedCountry = countrySelect.value;
+            citySelect.innerHTML = '<option value="">--Select City--</option>'; // Clear existing options
+            citySelect.disabled = true; // Disable until a country is selected
+
+            if (selectedCountry && citiesByCountry[selectedCountry]) {
+                citiesByCountry[selectedCountry].forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    citySelect.appendChild(option);
+                });
+                citySelect.disabled = false;
+            }
+        });
+
+
+        // --- Tables with Sorting/Filtering/Pagination ---
+        const dataTableBody = document.getElementById('data-table-body');
+        const tableFilterInput = document.getElementById('table-filter-input');
+        const tableSortSelect = document.getElementById('table-sort-select');
+        const prevPageBtn = document.getElementById('prev-page-btn');
+        const nextPageBtn = document.getElementById('next-page-btn');
+        const pageInfo = document.getElementById('page-info');
+        const tableHeaders = document.querySelectorAll('th[data-sort-by]');
+
+        let tableData = [
+            { id: 1, name: 'Alice', value: 100, status: 'Active' },
+            { id: 2, name: 'Bob', value: 150, status: 'Inactive' },
+            { id: 3, name: 'Charlie', value: 200, status: 'Active' },
+            { id: 4, name: 'David', value: 120, status: 'Pending' },
+            { id: 5, name: 'Eve', value: 180, status: 'Active' },
+            { id: 6, name: 'Frank', value: 90, status: 'Inactive' },
+            { id: 7, name: 'Grace', value: 210, status: 'Active' },
+            { id: 8, name: 'Heidi', value: 130, status: 'Pending' },
+            { id: 9, name: 'Ivan', value: 250, status: 'Active' },
+            { id: 10, name: 'Judy', value: 110, status: 'Inactive' },
+            { id: 11, name: 'Kevin', value: 170, status: 'Active' },
+            { id: 12, name: 'Liam', value: 140, status: 'Pending' },
+            { id: 13, name: 'Mia', value: 230, status: 'Active' },
+            { id: 14, name: 'Noah', value: 80, status: 'Inactive' },
+            { id: 15, name: 'Olivia', value: 260, status: 'Active' },
+        ];
+
+        let currentPage = 1;
+        const rowsPerPage = 5;
+        let currentSortColumn = 'id';
+        let currentSortDirection = 'asc'; // 'asc' or 'desc'
+
+        function renderTable() {
+            let filteredData = tableData.filter(item =>
+                item.name.toLowerCase().includes(tableFilterInput.value.toLowerCase())
+            );
+
+            filteredData.sort((a, b) => {
+                const aValue = a[currentSortColumn];
+                const bValue = b[currentSortColumn];
+
+                if (typeof aValue === 'string') {
+                    return currentSortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+                }
+                return currentSortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+            });
+
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = startIndex + rowsPerPage;
+            const paginatedData = filteredData.slice(startIndex, endIndex);
+
+            dataTableBody.innerHTML = '';
+            if (paginatedData.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="4" class="py-4 px-6 text-center text-gray-500">No data found.</td>`;
+                dataTableBody.appendChild(tr);
+            } else {
+                paginatedData.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="py-4 px-6">${item.id}</td>
+                        <td class="py-4 px-6">${item.name}</td>
+                        <td class="py-4 px-6">${item.value}</td>
+                        <td class="py-4 px-6">${item.status}</td>
+                    `;
+                    dataTableBody.appendChild(tr);
+                });
+            }
+
+            pageInfo.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+            prevPageBtn.disabled = currentPage === 1;
+            nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+
+            // Update sort icons
+            tableHeaders.forEach(header => {
+                const icon = header.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('fa-sort-up', 'fa-sort-down');
+                    icon.classList.add('fa-sort');
+                    if (header.dataset.sortBy === currentSortColumn) {
+                        icon.classList.remove('fa-sort');
+                        icon.classList.add(currentSortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down');
+                    }
+                }
+            });
+        }
+
+        tableHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const sortBy = header.dataset.sortBy;
+                if (currentSortColumn === sortBy) {
+                    currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSortColumn = sortBy;
+                    currentSortDirection = 'asc';
+                }
+                currentPage = 1; // Reset to first page on sort
+                renderTable();
+            });
+        });
+
+        tableFilterInput.addEventListener('input', () => {
+            currentPage = 1; // Reset to first page on filter
+            renderTable();
+        });
+        tableSortSelect.addEventListener('change', () => {
+            currentSortColumn = tableSortSelect.value; // Use the selected value for sorting
+            currentPage = 1; // Reset to first page on sort
+            renderTable();
+        });
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable();
+            }
+        });
+        nextPageBtn.addEventListener('click', () => {
+            const totalPages = Math.ceil(tableData.filter(item =>
+                item.name.toLowerCase().includes(tableFilterInput.value.toLowerCase())
+            ).length / rowsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderTable();
+            }
+        });
+
+        renderTable(); // Initial render
+
+        // --- Scroll Testing Area (Long List / Infinite Scroll) ---
+        const scrollArea = document.getElementById('scroll-area');
+        const scrollStatus = document.getElementById('scroll-status');
+        let scrollItemCount = 0;
+        const itemsToLoad = 20; // Number of items to load initially and on scroll
+
+        function loadMoreScrollItems() {
+            const fragment = document.createDocumentFragment();
+            for (let i = 0; i < itemsToLoad; i++) {
+                const p = document.createElement('p');
+                p.classList.add('py-2', 'border-b', 'border-gray-200', 'last:border-b-0', 'text-gray-700');
+                p.textContent = `Scroll Item ${++scrollItemCount}`;
+                fragment.appendChild(p);
+            }
+            scrollArea.appendChild(fragment);
+            scrollStatus.textContent = `Loaded ${scrollItemCount} items.`;
+        }
+
+        // Load initial items
+        loadMoreScrollItems();
+
+        scrollArea.addEventListener('scroll', () => {
+            // Check if user has scrolled to the bottom
+            if (scrollArea.scrollTop + scrollArea.clientHeight >= scrollArea.scrollHeight - 5) { // 5px buffer
+                loadMoreScrollItems();
+            }
+        });
+
+        // --- E-commerce Section (Cart) ---
+        const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
+        const cartList = document.getElementById('cart-list');
+        const cartTotalSpan = document.getElementById('cart-total');
+        const emptyCartMessage = document.getElementById('empty-cart-message');
+        const cartSummary = document.getElementById('cart-summary');
+        const checkoutBtn = document.getElementById('checkout-btn');
+        const checkoutSuccessMessage = document.getElementById('checkout-success-message');
+
+        let cart = [];
+
+        function updateCartDisplay() {
+            cartList.innerHTML = '';
+            let total = 0;
+
+            if (cart.length === 0) {
+                emptyCartMessage.classList.remove('hidden');
+                cartSummary.classList.add('hidden');
+                checkoutBtn.classList.add('hidden');
+                return;
+            } else {
+                emptyCartMessage.classList.add('hidden');
+                cartSummary.classList.remove('hidden');
+                checkoutBtn.classList.remove('hidden');
+            }
+
+            cart.forEach(item => {
+                const li = document.createElement('li');
+                li.classList.add('flex', 'justify-between', 'items-center', 'p-2', 'bg-white', 'rounded-md', 'shadow-sm');
+                li.innerHTML = `
+                    <div>
+                        <span class="font-semibold">${item.name}</span>
+                        <span class="text-gray-600"> ($${item.price.toFixed(2)}) x </span>
+                        <input type="number" min="1" value="${item.quantity}" data-product-id="${item.id}" class="cart-quantity-input w-16 p-1 border rounded-md text-center">
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-blue-700">$${(item.price * item.quantity).toFixed(2)}</span>
+                        <button class="remove-from-cart-btn text-red-500 hover:text-red-700" data-product-id="${item.id}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `;
+                cartList.appendChild(li);
+                total += item.price * item.quantity;
+            });
+
+            cartTotalSpan.textContent = `$${total.toFixed(2)}`;
+            addCartEventListeners();
+        }
+
+        function addCartEventListeners() {
+            document.querySelectorAll('.remove-from-cart-btn').forEach(button => {
+                button.onclick = (e) => {
+                    const productId = parseInt(e.currentTarget.dataset.productId);
+                    cart = cart.filter(item => item.id !== productId);
+                    updateCartDisplay();
+                };
+            });
+
+            document.querySelectorAll('.cart-quantity-input').forEach(input => {
+                input.onchange = (e) => {
+                    const productId = parseInt(e.currentTarget.dataset.productId);
+                    const newQuantity = parseInt(e.currentTarget.value);
+                    const item = cart.find(item => item.id === productId);
+                    if (item && newQuantity > 0) {
+                        item.quantity = newQuantity;
+                    } else if (item && newQuantity <= 0) {
+                        cart = cart.filter(item => item.id !== productId); // Remove if quantity is 0 or less
+                    }
+                    updateCartDisplay();
+                };
+            });
+        }
+
+        addToCartButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const productId = parseInt(e.currentTarget.dataset.productId);
+                const productName = e.currentTarget.dataset.productName;
+                const productPrice = parseFloat(e.currentTarget.dataset.productPrice);
+
+                const existingItem = cart.find(item => item.id === productId);
+
+                if (existingItem) {
+                    existingItem.quantity++;
+                } else {
+                    cart.push({
+                        id: productId,
+                        name: productName,
+                        price: productPrice,
+                        quantity: 1
+                    });
+                }
+                updateCartDisplay();
+            });
+        });
+
+        checkoutBtn.addEventListener('click', () => {
+            // Simulate checkout process
+            checkoutSuccessMessage.classList.remove('hidden');
+            setTimeout(() => {
+                checkoutSuccessMessage.classList.add('hidden');
+                cart = []; // Clear cart after "checkout"
+                updateCartDisplay();
+            }, 3000);
+        });
+
+        updateCartDisplay(); // Initial cart display
+
+        // --- Admin Panel ---
+        const adminLoginForm = document.getElementById('admin-login-form');
+        const adminUsernameInput = document.getElementById('admin-username');
+        const adminPasswordInput = document.getElementById('admin-password');
+        const adminLoginMessage = document.getElementById('admin-login-message');
+        const adminLoginArea = document.getElementById('admin-login-area');
+        const adminDashboardArea = document.getElementById('admin-dashboard-area');
+        const adminLogoutBtn = document.getElementById('admin-logout-btn');
+        const adminWelcomeMessage = document.getElementById('admin-welcome-message');
+
+        adminLoginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = adminUsernameInput.value;
+            const password = adminPasswordInput.value;
+
+            if (username === 'admin' && password === 'password123') {
+                adminLoginArea.classList.add('hidden');
+                adminDashboardArea.classList.remove('hidden');
+                adminLoginMessage.classList.add('hidden');
+                adminWelcomeMessage.classList.remove('hidden');
+            } else {
+                adminLoginMessage.classList.remove('hidden');
+                adminWelcomeMessage.classList.add('hidden');
+            }
+        });
+
+        adminLogoutBtn.addEventListener('click', () => {
+            adminDashboardArea.classList.add('hidden');
+            adminLoginArea.classList.remove('hidden');
+            adminLoginMessage.classList.add('hidden');
+            adminWelcomeMessage.classList.add('hidden');
+            adminLoginForm.reset();
+        });
+
+        // --- Advanced Interactions ---
+        // Window Handling
+        const openNewWindowBtn = document.getElementById('open-new-window-btn');
+        openNewWindowBtn.addEventListener('click', () => {
+            window.open('about:blank', '_blank'); // Opens a new blank tab/window
+        });
+
+        // Mouse Operations
+        const doubleClickBox = document.getElementById('double-click-box');
+        const rightClickBox = document.getElementById('right-click-box');
+        const mouseEventStatus = document.getElementById('mouse-event-status');
+
+        doubleClickBox.addEventListener('dblclick', () => {
+            mouseEventStatus.textContent = 'Event status: Double Clicked!';
+            doubleClickBox.textContent = 'Double Clicked!';
+            setTimeout(() => {
+                doubleClickBox.textContent = 'Double Click Me';
+                mouseEventStatus.textContent = 'Event status: None';
+            }, 1500);
+        });
+
+        rightClickBox.addEventListener('contextmenu', (e) => {
+            e.preventDefault(); // Prevent default right-click context menu
+            mouseEventStatus.textContent = 'Event status: Right Clicked!';
+            rightClickBox.textContent = 'Right Clicked!';
+            setTimeout(() => {
+                rightClickBox.textContent = 'Right Click Me';
+                mouseEventStatus.textContent = 'Event status: None';
+            }, 1500);
+        });
+    </script>
+</body>
+</html>
